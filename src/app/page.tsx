@@ -6,7 +6,9 @@ import Footer from "@/components/Footer";
 import InputBox from "@/components/InputBox";
 import CodePreview from "@/components/CodePreview";
 import Notification from "@/components/Notification";
-import { generateCode } from "@/lib/ai";
+import FeedbackCard from "@/components/FeedbackCard";
+import { generateCode, generateFeedback } from "@/lib/ai";
+import { generateSpeech } from "@/lib/tts";
 import { COLORS } from "@/lib/constants";
 
 export default function Home() {
@@ -17,6 +19,10 @@ export default function Home() {
     message: "",
     type: "info" as "success" | "error" | "info",
   });
+  const [lastPrompt, setLastPrompt] = useState("");
+  const [feedback, setFeedback] = useState("");
+  const [audioUrl, setAudioUrl] = useState("");
+  const [isFeedbackLoading, setIsFeedbackLoading] = useState(false);
 
   const showNotification = (
     message: string,
@@ -29,14 +35,42 @@ export default function Home() {
     });
   };
 
+  // Generate feedback and voice note after code generation
+  const generateFeedbackAndSpeech = async (
+    prompt: string,
+    generatedCode: string
+  ) => {
+    setIsFeedbackLoading(true);
+    try {
+      // Generate text feedback using Gemini
+      const feedbackText = await generateFeedback(prompt, generatedCode);
+      setFeedback(feedbackText);
+
+      // Generate speech from the feedback text
+      const speechUrl = await generateSpeech(feedbackText);
+      setAudioUrl(speechUrl);
+    } catch (error) {
+      console.error("Error generating feedback or speech:", error);
+      setFeedback("عذراً، حدث خطأ أثناء توليد الملاحظات الصوتية");
+    } finally {
+      setIsFeedbackLoading(false);
+    }
+  };
+
   const handleSubmit = async (prompt: string) => {
     setIsLoading(true);
+    setLastPrompt(prompt);
+    setFeedback("");
+    setAudioUrl("");
     showNotification("جاري توليد الكود...", "info");
 
     try {
       const generatedCode = await generateCode(prompt);
       setCode(generatedCode);
       showNotification("تم توليد الكود بنجاح!", "success");
+
+      // After code generation, generate feedback and speech
+      await generateFeedbackAndSpeech(prompt, generatedCode);
     } catch (error) {
       console.error("Error generating code:", error);
       showNotification("حدث خطأ أثناء توليد الكود", "error");
@@ -89,14 +123,29 @@ export default function Home() {
                 نصائح للأطفال:
               </h3>
               <ul className="list-disc list-inside text-right text-sm space-y-1">
-                <li>جرب كتابة تعليمات واضحة مثل "ارسم دائرة حمراء"</li>
+                <li>
+                  جرب كتابة تعليمات واضحة مثل &quot;ارسم دائرة حمراء&quot;
+                </li>
                 <li>يمكنك طلب أشكال متحركة أو ألعاب بسيطة</li>
-                <li>استخدم زر "اقتراح فكرة" للحصول على أفكار جديدة</li>
+                <li>
+                  استخدم زر &quot;اقتراح فكرة&quot; للحصول على أفكار جديدة
+                </li>
                 <li>جرب تعديل التعليمات لترى نتائج مختلفة</li>
               </ul>
             </div>
           </div>
         </div>
+
+        {/* Feedback section - new in v2 */}
+        {(feedback || lastPrompt || isFeedbackLoading) && (
+          <div className="mt-8">
+            <FeedbackCard
+              feedback={feedback}
+              audioUrl={audioUrl}
+              isLoading={isFeedbackLoading}
+            />
+          </div>
+        )}
       </main>
 
       <Footer />

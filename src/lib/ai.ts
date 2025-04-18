@@ -21,6 +21,23 @@ export const promptTemplate = (input: string) => `
 أخرج الكود كاملاً في ملف HTML واحد.
 `;
 
+// Template for generating feedback about the code
+export const feedbackTemplate = (input: string, code: string) => `
+أنت مساعد ذكي تشرح للأطفال سبب ظهور هذا الكود.
+اكتب ملاحظة صوتية قصيرة تشرح:
+- لماذا الكود يعمل بهذه الطريقة
+- كيف يمكن تحسينه بفكرة بسيطة
+- رسالة تحفيزية للتكرار
+
+الطلب:
+"${input}"
+
+الكود:
+${code}
+
+اكتب الملاحظة كأنك تتحدث لطفل عمره 10 سنوات.
+`;
+
 // Function for direct server-side code generation (can be used in Server Actions)
 export async function generateCodeServer(prompt: string): Promise<string> {
   try {
@@ -37,6 +54,23 @@ export async function generateCodeServer(prompt: string): Promise<string> {
     return match && match[1] ? match[1].trim() : generatedCode;
   } catch (error) {
     console.error("Error generating code on server:", error);
+    throw error;
+  }
+}
+
+// Function for direct server-side feedback generation
+export async function generateFeedbackServer(
+  prompt: string,
+  code: string
+): Promise<string> {
+  try {
+    // Get the model and generate content
+    const model = genAI.getGenerativeModel({ model: MODEL_NAME });
+    const result = await model.generateContent(feedbackTemplate(prompt, code));
+    const response = await result.response;
+    return response.text();
+  } catch (error) {
+    console.error("Error generating feedback on server:", error);
     throw error;
   }
 }
@@ -87,5 +121,36 @@ export async function generateCode(prompt: string): Promise<string> {
   <p>يرجى المحاولة مرة أخرى بتعليمات مختلفة</p>
 </body>
 </html>`;
+  }
+}
+
+// Client-side code to interact with our feedback API endpoint
+export async function generateFeedback(
+  prompt: string,
+  code: string
+): Promise<string> {
+  try {
+    const response = await fetch("/api/feedback", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ prompt, code }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (data.error) {
+      throw new Error(data.error);
+    }
+
+    return data.feedback;
+  } catch (error) {
+    console.error("Error generating feedback:", error);
+    throw error;
   }
 }
