@@ -11,31 +11,35 @@ export const MODEL_NAME = "gemini-1.5-pro";
 
 // Template prompt for Gemini to generate children's code from natural language
 export const promptTemplate = (input: string) => `
-أنت مساعد برمجي للأطفال. مهمتك هي توليد كود بسيط جدًا باستخدام HTML و CSS و JavaScript فقط.
-الكود يجب أن يكون تعليمي وممتع وبدون تعقيد، ويفضل أن يحتوي على تفاعل بسيط (زر، حركة، تغيير لون).
-لا تستخدم مكتبات خارجية. الكود يجب أن يعمل داخل iframe مباشرة.
+أنت مساعد برمجي للأطفال تعلمهم هندسة البرومبت. مهمتك هي توليد كود HTML و CSS و JavaScript بناءً على برومبت الطفل.
 
-تعليمات الطفل:
+الكود يجب أن:
+1. يكون تعليميًا ويظهر علاقة واضحة بين البرومبت والكود المنتج
+2. يكون بسيطًا وممتعًا للأطفال بين 8-14 سنة
+3. يتضمن تعليقات توضيحية داخل الكود تشرح الأجزاء المهمة
+4. يعمل مباشرةً داخل iframe دون الحاجة لمكتبات خارجية
+
+برومبت الطفل:
 "${input}"
 
 أخرج الكود كاملاً في ملف HTML واحد.
 `;
 
-// Template for generating feedback about the code
+// Template for generating feedback about the code and prompt quality
 export const feedbackTemplate = (input: string, code: string) => `
-أنت مساعد ذكي تشرح للأطفال سبب ظهور هذا الكود.
-اكتب ملاحظة صوتية قصيرة تشرح:
-- لماذا الكود يعمل بهذه الطريقة
-- كيف يمكن تحسينه بفكرة بسيطة
-- رسالة تحفيزية للتكرار
+أنت مساعد تعليمي يساعد الأطفال على تعلم هندسة البرومبت باستخدام الذكاء الاصطناعي.
+مهمتك تحليل برومبت الطفل والكود الناتج لتقديم ملاحظات مفيدة.
 
-الطلب:
+اكتب ملاحظة صوتية قصيرة ومبسطة تتضمن:
+رسالة تشجيعية للطفل ولتوسيع خياله وحماسه
+
+برومبت الطفل:
 "${input}"
 
-الكود:
-${code}
+الكود الناتج (مختصر):
+${code.substring(0, 300)}...
 
-اكتب الملاحظة كأنك تتحدث لطفل عمره 10 سنوات.
+اكتب الملاحظة كأنك تتحدث مع طفل عمره 8-14 سنة. استخدم لغة بسيطة، ودودة، وتشجيعية.
 `;
 
 // Function for direct server-side code generation (can be used in Server Actions)
@@ -151,6 +155,32 @@ export async function generateFeedback(
     return data.feedback;
   } catch (error) {
     console.error("Error generating feedback:", error);
+    throw error;
+  }
+}
+
+// New function to analyze prompt quality
+export async function analyzePromptQuality(prompt: string): Promise<{
+  score: number;
+  feedback: string;
+  improvements: string[];
+}> {
+  try {
+    const response = await fetch("/api/analyze-prompt", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ prompt }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error analyzing prompt quality:", error);
     throw error;
   }
 }

@@ -9,7 +9,7 @@ export default function Header() {
         <div className="flex items-center mb-4 sm:mb-0">
           <Image
             src="/images/robot-mascot.svg"
-            alt="كود المرح روبوت"
+            alt="كدكود روبوت"
             width={80}
             height={80}
             className="animate-float"
@@ -20,7 +20,7 @@ export default function Header() {
           </div>
         </div>
         <div className="bg-yellow-300 text-blue-800 py-1 px-3 rounded-full text-sm font-bold">
-          نسخة تجريبية للأطفال
+          نسخة تجريبية
         </div>
       </div>
       <div className="absolute -bottom-10 left-0 right-0 h-16 bg-[url('/images/wave.svg')] bg-repeat-x opacity-20"></div>

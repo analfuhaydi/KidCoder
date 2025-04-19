@@ -7,9 +7,10 @@ import InputBox from "@/components/InputBox";
 import CodePreview from "@/components/CodePreview";
 import Notification from "@/components/Notification";
 import FeedbackCard from "@/components/FeedbackCard";
-import { generateCode, generateFeedback } from "@/lib/ai";
+import { generateCode, generateFeedback, analyzePromptQuality } from "@/lib/ai";
 import { generateSpeech } from "@/lib/tts";
-import { COLORS } from "@/lib/constants";
+import { COLORS, PROMPT_ENGINEERING_TIPS } from "@/lib/constants";
+import AuthGuard from "@/components/AuthGuard";
 
 export default function Home() {
   const [code, setCode] = useState("");
@@ -23,6 +24,12 @@ export default function Home() {
   const [feedback, setFeedback] = useState("");
   const [audioUrl, setAudioUrl] = useState("");
   const [isFeedbackLoading, setIsFeedbackLoading] = useState(false);
+  const [promptAnalysis, setPromptAnalysis] = useState<{
+    score: number;
+    feedback: string;
+    improvements: string[];
+  } | null>(null);
+  const [isAnalysisLoading, setIsAnalysisLoading] = useState(false);
 
   const showNotification = (
     message: string,
@@ -35,25 +42,34 @@ export default function Home() {
     });
   };
 
-  // Generate feedback and voice note after code generation
-  const generateFeedbackAndSpeech = async (
+  // Generate feedback, voice note, and analyze prompt quality
+  const generateFeedbackAndAnalysis = async (
     prompt: string,
     generatedCode: string
   ) => {
     setIsFeedbackLoading(true);
+    setIsAnalysisLoading(true);
+
     try {
-      // Generate text feedback using Gemini
-      const feedbackText = await generateFeedback(prompt, generatedCode);
+      // Run these in parallel for better performance
+      const [feedbackText, promptAnalysisResult] = await Promise.all([
+        generateFeedback(prompt, generatedCode),
+        analyzePromptQuality(prompt),
+      ]);
+
       setFeedback(feedbackText);
+      setPromptAnalysis(promptAnalysisResult);
 
       // Generate speech from the feedback text
       const speechUrl = await generateSpeech(feedbackText);
       setAudioUrl(speechUrl);
     } catch (error) {
-      console.error("Error generating feedback or speech:", error);
-      setFeedback("عذراً، حدث خطأ أثناء توليد الملاحظات الصوتية");
+      console.error("Error generating feedback or analysis:", error);
+      setFeedback("عذراً، حدث خطأ أثناء توليد الملاحظات");
+      setPromptAnalysis(null);
     } finally {
       setIsFeedbackLoading(false);
+      setIsAnalysisLoading(false);
     }
   };
 
@@ -62,6 +78,7 @@ export default function Home() {
     setLastPrompt(prompt);
     setFeedback("");
     setAudioUrl("");
+    setPromptAnalysis(null);
     showNotification("جاري توليد الكود...", "info");
 
     try {
@@ -69,8 +86,8 @@ export default function Home() {
       setCode(generatedCode);
       showNotification("تم توليد الكود بنجاح!", "success");
 
-      // After code generation, generate feedback and speech
-      await generateFeedbackAndSpeech(prompt, generatedCode);
+      // After code generation, generate feedback and analyze prompt
+      await generateFeedbackAndAnalysis(prompt, generatedCode);
     } catch (error) {
       console.error("Error generating code:", error);
       showNotification("حدث خطأ أثناء توليد الكود", "error");
@@ -104,58 +121,64 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#FFFDF5]">
-      <Header />
+    <AuthGuard>
+      <div className="flex flex-col min-h-screen bg-[#FFFDF5]">
+        <Header />
 
-      <main className="flex-1 container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="order-2 lg:order-1">
-            <h2 className="text-xl font-bold mb-3 text-right">المعاينة</h2>
-            <CodePreview code={code} isLoading={isLoading} />
-          </div>
+        <main className="flex-1 container mx-auto px-4 py-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="order-2 lg:order-1">
+              <h2 className="text-xl font-bold mb-3 text-right">المعاينة</h2>
+              <CodePreview code={code} isLoading={isLoading} />
+            </div>
 
-          <div className="order-1 lg:order-2">
-            <h2 className="text-xl font-bold mb-3 text-right">الكود</h2>
-            <InputBox onSubmit={handleSubmit} isLoading={isLoading} />
+            <div className="order-1 lg:order-2">
+              <h2 className="text-xl font-bold mb-3 text-right">
+                برومبت الذكاء الاصطناعي
+              </h2>
+              <InputBox onSubmit={handleSubmit} isLoading={isLoading} />
 
-            <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
-              <h3 className="text-lg font-bold text-right mb-2">
-                نصائح للأطفال:
-              </h3>
-              <ul className="list-disc list-inside text-right text-sm space-y-1">
-                <li>
-                  جرب كتابة تعليمات واضحة مثل &quot;ارسم دائرة حمراء&quot;
-                </li>
-                <li>يمكنك طلب أشكال متحركة أو ألعاب بسيطة</li>
-                <li>
-                  استخدم زر &quot;اقتراح فكرة&quot; للحصول على أفكار جديدة
-                </li>
-                <li>جرب تعديل التعليمات لترى نتائج مختلفة</li>
-              </ul>
+              <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
+                <h3 className="text-lg font-bold text-right mb-2">
+                  نصائح لهندسة البرومبت:
+                </h3>
+                <ul className="list-disc list-inside text-right text-sm space-y-1">
+                  {PROMPT_ENGINEERING_TIPS.map((tip, index) => (
+                    <li key={index}>{tip}</li>
+                  ))}
+                </ul>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Feedback section - new in v2 */}
-        {(feedback || lastPrompt || isFeedbackLoading) && (
-          <div className="mt-8">
-            <FeedbackCard
-              feedback={feedback}
-              audioUrl={audioUrl}
-              isLoading={isFeedbackLoading}
-            />
-          </div>
-        )}
-      </main>
+          {/* Feedback section with prompt analysis */}
+          {(feedback ||
+            lastPrompt ||
+            isFeedbackLoading ||
+            promptAnalysis ||
+            isAnalysisLoading) && (
+            <div className="mt-8">
+              <FeedbackCard
+                feedback={feedback}
+                audioUrl={audioUrl}
+                isLoading={isFeedbackLoading}
+                promptAnalysis={promptAnalysis || undefined}
+                isAnalysisLoading={isAnalysisLoading}
+                transcript={feedback} // Pass feedback as transcript to VoiceNotePlayer
+              />
+            </div>
+          )}
+        </main>
 
-      <Footer />
+        <Footer />
 
-      <Notification
-        message={notification.message}
-        type={notification.type}
-        show={notification.show}
-        onClose={() => setNotification((prev) => ({ ...prev, show: false }))}
-      />
-    </div>
+        <Notification
+          message={notification.message}
+          type={notification.type}
+          show={notification.show}
+          onClose={() => setNotification((prev) => ({ ...prev, show: false }))}
+        />
+      </div>
+    </AuthGuard>
   );
 }

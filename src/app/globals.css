@@ -1,1 +1,80 @@
 @import "tailwindcss";
+
+/* RTL Support */
+html {
+  direction: rtl;
+}
+
+/* Tooltip Styles */
+.tooltip {
+  position: relative;
+  display: inline-block;
+}
+
+.tooltip .tooltiptext {
+  visibility: hidden;
+  width: 200px;
+  top: -5px;
+  right: 105%;
+  background-color: #333;
+  color: #fff;
+  text-align: right;
+  border-radius: 6px;
+  padding: 5px 8px;
+  position: absolute;
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* Animation for loading spinner */
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Custom scrollbar for code preview */
+.code-preview::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.code-preview::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.code-preview::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 10px;
+}
+
+.code-preview::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Animation for robot mascot */
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}

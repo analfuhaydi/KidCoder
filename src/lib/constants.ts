@@ -22,7 +22,17 @@ export const SAMPLE_PROMPTS = [
 
 // Application metadata
 export const APP_META = {
-  TITLE: "كود المرح",
-  SUBTITLE: "تعليم البرمجة للأطفال باستخدام الذكاء الاصطناعي",
-  FOOTER_TEXT: "تم التطوير بواسطة فريق كود المرح © 2025",
+  TITLE: "كدكود",
+  SUBTITLE: "تعليم هندسة البرومبت بالذكاء الاصطناعي للأطفال",
+  FOOTER_TEXT: "تم التطوير بواسطة فريق كدكود © 2025",
+  VERSION: "2.0.0",
+  AGE_RANGE: "8-14",
 };
+
+// New sample prompts focused on prompt engineering concepts
+export const PROMPT_ENGINEERING_TIPS = [
+  "كن محددًا في وصف ما تريده (مثال: أريد مربعًا أحمر بحجم 200 بكسل)",
+  "اذكر السلوك المطلوب للعناصر (مثال: زر يتحرك للأعلى عند النقر)",
+  "استخدم الألوان والأحجام في وصفك لنتائج أفضل",
+  "جرب أن تطلب تعليقات توضيحية في الكود",
+];
