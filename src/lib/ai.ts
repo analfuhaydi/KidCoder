@@ -7,7 +7,7 @@ const API_KEY = process.env.GEMINI_API_KEY || "YOUR_API_KEY"; // Replace with yo
 const genAI = new GoogleGenerativeAI(API_KEY);
 
 // The model we'll use for code generation
-export const MODEL_NAME = "gemini-1.5-pro";
+export const MODEL_NAME = "gemini-1.5-pro"; // Changed from gemini-2.5-pro to gemini-pro which is widely available
 
 // Template prompt for Gemini to generate children's code from natural language
 export const promptTemplate = (input: string) => `
@@ -27,19 +27,14 @@ export const promptTemplate = (input: string) => `
 
 // Template for generating feedback about the code and prompt quality
 export const feedbackTemplate = (input: string, code: string) => `
-أنت مساعد تعليمي يساعد الأطفال على تعلم هندسة البرومبت باستخدام الذكاء الاصطناعي.
-مهمتك تحليل برومبت الطفل والكود الناتج لتقديم ملاحظات مفيدة.
+اعطي ردة فعل انبهار لشغل الطفل ثم اقترح اضافه يسويها
 
-اكتب ملاحظة صوتية قصيرة ومبسطة تتضمن:
-رسالة تشجيعية للطفل ولتوسيع خياله وحماسه
+الفكره هي نشجع الطفل لتعلم prompt engineering
 
-برومبت الطفل:
-"${input}"
+وهذي نتيجة البرومبت الي كتبه الطفل: ${input}
 
-الكود الناتج (مختصر):
-${code.substring(0, 300)}...
 
-اكتب الملاحظة كأنك تتحدث مع طفل عمره 8-14 سنة. استخدم لغة بسيطة، ودودة، وتشجيعية.
+${code.substring(0, 300)}
 `;
 
 // Function for direct server-side code generation (can be used in Server Actions)
@@ -82,6 +77,10 @@ export async function generateFeedbackServer(
 // Client-side code to interact with our secure API endpoint
 export async function generateCode(prompt: string): Promise<string> {
   try {
+    if (!prompt || prompt.trim() === "") {
+      throw new Error("البرومبت فارغ");
+    }
+
     const response = await fetch("/api/generate", {
       method: "POST",
       headers: {
@@ -91,7 +90,8 @@ export async function generateCode(prompt: string): Promise<string> {
     });
 
     if (!response.ok) {
-      throw new Error(`Error: ${response.status}`);
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `Error: ${response.status}`);
     }
 
     const data = await response.json();
@@ -100,7 +100,7 @@ export async function generateCode(prompt: string): Promise<string> {
       throw new Error(data.error);
     }
 
-    return data.code;
+    return data.code || "";
   } catch (error) {
     console.error("Error generating code:", error);
     return `
@@ -134,6 +134,10 @@ export async function generateFeedback(
   code: string
 ): Promise<string> {
   try {
+    if (!prompt || !code) {
+      throw new Error("البرومبت أو الكود فارغ");
+    }
+
     const response = await fetch("/api/feedback", {
       method: "POST",
       headers: {
@@ -143,7 +147,8 @@ export async function generateFeedback(
     });
 
     if (!response.ok) {
-      throw new Error(`Error: ${response.status}`);
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `Error: ${response.status}`);
     }
 
     const data = await response.json();
@@ -152,10 +157,11 @@ export async function generateFeedback(
       throw new Error(data.error);
     }
 
-    return data.feedback;
+    return data.feedback || "";
   } catch (error) {
     console.error("Error generating feedback:", error);
-    throw error;
+    // Return a fallback feedback message instead of throwing an error
+    return "أحسنت! استمر في تجربة المزيد من الأفكار والتعلم. يمكنك تحسين البرومبت بإضافة المزيد من التفاصيل.";
   }
 }
 

@@ -32,11 +32,11 @@ export async function POST(req: Request) {
     const finalCode = match && match[1] ? match[1].trim() : generatedCode;
 
     return NextResponse.json({ code: finalCode });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error generating code:", error);
-    return NextResponse.json(
-      { error: "حدث خطأ أثناء توليد الكود" },
-      { status: 500 }
-    );
+    const errorMessage =
+      error instanceof Error ? error.message : "حدث خطأ أثناء توليد الكود";
+
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

@@ -26,11 +26,11 @@ export async function POST(req: Request) {
     const feedback = response.text();
 
     return NextResponse.json({ feedback });
-  } catch (error: unknown) {
+  } catch (error) {
     console.error("Error generating feedback:", error);
-    return NextResponse.json(
-      { error: "حدث خطأ أثناء توليد الملاحظات" },
-      { status: 500 }
-    );
+    const errorMessage =
+      error instanceof Error ? error.message : "حدث خطأ أثناء توليد الملاحظات";
+
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
