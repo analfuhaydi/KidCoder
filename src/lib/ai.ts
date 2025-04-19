@@ -26,15 +26,40 @@ export const promptTemplate = (input: string) => `
 `;
 
 // Template for generating feedback about the code and prompt quality
-export const feedbackTemplate = (input: string, code: string) => `
-اعطي ردة فعل انبهار لشغل الطفل ثم اقترح اضافه يسويها
+export const feedbackTemplate = (input: string, code: string) =>
+  `
+أنت مدرس سعودي تشرح البرمجة للأطفال في المرحلة الابتدائية (من ٨ إلى ١٤ سنة) داخل منصة كدكود.
 
-الفكره هي نشجع الطفل لتعلم prompt engineering
+مهمتك: اكتب ملاحظة صوتية قصيرة ومبسطة باللهجة السعودية، موجهة للطفل بعد ما كتب كود HTML/CSS/JS بسيط.
 
-وهذي نتيجة البرومبت الي كتبه الطفل: ${input}
+الهدف من الملاحظة:
+
+تشجيع الطفل على محاولته الحالية
+
+الإشارة لشيء جميل أو واضح في الكود
+
+تقديم اقتراح واحد فقط سهل (مثل: تغيير لون، تكبير خط، تعديل مكان، تغيير نص)
+
+دعوة الطفل يجرب التغيير ويلاحظ النتيجة
+
+شروط مهمة:
+
+استخدم لهجة سعودية بسيطة
+
+لا تستخدم مصطلحات برمجية
+
+لا تشرح الكود
+
+لا تقدم أكثر من اقتراح
+
+لا تطول، الملاحظة من 3 إلى 4 جمل فقط
+
+طلب الطفل: ${input}
+الكود الناتج: ${code.substring(0, 300)}
+
+اكتب الآن الملاحظة الصوتية باللهجة السعودية
 
 
-${code.substring(0, 300)}
 `;
 
 // Function for direct server-side code generation (can be used in Server Actions)
